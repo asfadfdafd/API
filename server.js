@@ -48,12 +48,8 @@ const CAR_API_KEY = process.env.CAR_API_KEY;
 
 // ------------------- Routes -------------------
 
-// Login routes
-app.get('/', (req, res) => {
-    res.redirect('/login');
-});
 
-app.get('/login', (req, res) => {
+app.get('/', (req, res) => {
     res.render('login');
 });
 
