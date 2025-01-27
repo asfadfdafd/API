@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Information</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+    
+</head>
+<body>
+<div class="container">
+    <h1 class="my-4 text-center">Car Information</h1>
+
+    <!-- Search by Car Model -->
+    <div class="form-group text-center">
+        <input type="text" id="carModelInput" class="form-control w-50 d-inline-block" placeholder="Enter car model (e.g., camry)" />
+        <button id="carSearchButton" class="btn btn-secondary mt-2">Search Car Info</button>
+    </div>
+
+    <!-- Search by VIN -->
+    <div class="form-group text-center mt-4">
+        <input type="text" id="vinInput" class="form-control w-50 d-inline-block" placeholder="Enter VIN (e.g., 1HGCM82633A123456)" />
+        <button id="vinSearchButton" class="btn btn-primary mt-2">Decode VIN</button>
+    </div>
+
+    <!-- Results -->
+    <div id="results" class="result-container"></div>
+
+    <!-- Navigation -->
+    <div class="text-center mt-5">
+        <a href="/index.html" class="btn btn-secondary">Go to Weather Page</a>
+    </div>
+</div>
+
+<script src="cars.js"></script>
+</body>
+</html>

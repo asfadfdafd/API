@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+</head>
+<body>
+    <h1>Admin Panel</h1>
+    <h3>Users:</h3>
+    <ul>
+        <% users.forEach(user => { %>
+            <li>
+                <%= user.username %> (<%= user.isAdmin ? "Admin" : "User" %>)
+                <form action="/admin/delete/<%= user._id %>" method="POST" style="display:inline;">
+                    <button type="submit">Delete</button>
+                </form>
+            </li>
+        <% }) %>
+    </ul>
+    <h3>Add User</h3>
+    <form action="/admin/add" method="POST">
+        <label>Username: <input type="text" name="username" required></label><br>
+        <label>Password: <input type="text" name="password" required></label><br>
+        <label>Admin: <input type="checkbox" name="isAdmin"></label><br>
+        <button type="submit">Add User</button>
+    </form>
+    <%- include('partials/footer') %>
+</body>
+</html>
