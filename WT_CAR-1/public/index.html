@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather and City Map</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        #map { height: 300px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="my-4">Weather and City Map</h1>
+
+    <!-- City Name Input Form -->
+    <div class="form-group">
+        <input type="text" id="cityName" class="form-control" placeholder="Enter city name" />
+        <button id="submitButton" class="btn btn-primary mt-2">Get Weather</button>
+    </div>
+
+    <!-- Weather Information -->
+    <div id="weatherInfo"></div>
+
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Link to Car Page -->
+    <hr class="my-5">
+    <a href="/cars.html" class="btn btn-secondary">Go to Car Info Page</a>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
