@@ -99,11 +99,8 @@ app.get('/dashboard', isAuthenticated, (req, res) => {
 
 // Weather API route
 app.get('/weather', async (req, res) => {
-    const city = req.query.city;
-    if (!city) {
-        return res.status(400).json({ error: 'City is required' });
-    }
-
+    const city = req.query.city || 'Astana'; // Дефолтный город
+    
     try {
         const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${WEATHER_API_KEY}&units=metric`;
         const response = await fetch(url);
@@ -114,7 +111,7 @@ app.get('/weather', async (req, res) => {
                 userRequest: { api: 'Weather API', input: { city } },
                 response: { error: 'City not found' },
             });
-            return res.status(404).json({ error: 'City not found' });
+            return res.render('weather', { data: null, error: 'City not found' });
         }
 
         await History.create({
@@ -122,25 +119,10 @@ app.get('/weather', async (req, res) => {
             response: data,
         });
 
-        res.json({
-            name: data.name,
-            country: data.sys.country,
-            temperature: data.main.temp,
-            description: data.weather[0].description,
-            icon: data.weather[0].icon,
-            feels_like: data.main.feels_like,
-            humidity: data.main.humidity,
-            pressure: data.main.pressure,
-            wind_speed: data.wind.speed,
-            coordinates: {
-                lat: data.coord.lat,
-                lon: data.coord.lon,
-            },
-            rain: data.rain ? data.rain['1h'] : 0,
-        });
+        res.render('weather', { data });
     } catch (error) {
         console.error('Error fetching weather data:', error);
-        res.status(500).json({ error: 'Failed to fetch weather data' });
+        res.render('weather', { data: null, error: 'Failed to fetch weather data' });
     }
 });
 
