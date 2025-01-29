@@ -50,7 +50,7 @@
 <script src="/main.js"></script>
 
 <script>
-    <% if (data && data.coordinates) { %>
+    <% if (data && data.coordinates && data.coordinates.lat && data.coordinates.lon) { %>
         var map = L.map('map').setView([<%= data.coordinates.lat %>, <%= data.coordinates.lon %>], 10);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors'
@@ -58,8 +58,11 @@
         L.marker([<%= data.coordinates.lat %>, <%= data.coordinates.lon %>]).addTo(map)
             .bindPopup('<%= data.name %>, <%= data.country %>')
             .openPopup();
+    <% } else { %>
+        console.error("Coordinates not available");
     <% } %>
 </script>
+
 
 </body>
 </html>
