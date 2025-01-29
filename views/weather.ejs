@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather and City Map</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        #map { height: 300px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="my-4">Weather and City Map</h1>
+
+    <!-- City Name Input Form -->
+    <form action="/weather" method="get">
+        <div class="form-group">
+            <input type="text" name="city" id="cityName" class="form-control" placeholder="Enter city name" required />
+            <button type="submit" class="btn btn-primary mt-2">Get Weather</button>
+        </div>
+    </form>
+
+    <!-- Weather Information -->
+    <% if (data) { %>
+        <div id="weatherInfo" class="alert alert-info">
+            <h3><%= data.name %>, <%= data.country %></h3>
+            <p><strong>Temperature:</strong> <%= data.temperature %>°C</p>
+            <p><strong>Feels Like:</strong> <%= data.feels_like %>°C</p>
+            <p><strong>Humidity:</strong> <%= data.humidity %>%</p>
+            <p><strong>Pressure:</strong> <%= data.pressure %> hPa</p>
+            <p><strong>Wind Speed:</strong> <%= data.wind_speed %> m/s</p>
+            <p><strong>Description:</strong> <%= data.description %></p>
+            <img src="https://openweathermap.org/img/wn/<%= data.icon %>@2x.png" alt="Weather Icon">
+        </div>
+    <% } else { %>
+        <div class="alert alert-warning">Enter a city name to see weather information.</div>
+    <% } %>
+
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Link to Car Page -->
+    <hr class="my-5">
+    <a href="/cars.html" class="btn btn-secondary">Go to Car Info Page</a>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.js"></script>
+<script src="/main.js"></script>
+
+<script>
+    <% if (data && data.coordinates) { %>
+        var map = L.map('map').setView([<%= data.coordinates.lat %>, <%= data.coordinates.lon %>], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+        L.marker([<%= data.coordinates.lat %>, <%= data.coordinates.lon %>]).addTo(map)
+            .bindPopup('<%= data.name %>, <%= data.country %>')
+            .openPopup();
+    <% } %>
+</script>
+
+</body>
+</html>
