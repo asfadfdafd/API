@@ -22,20 +22,23 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
-app.use(express.static('public')); // Serve static files
-app.use(express.urlencoded({ extended: true })); // Parse form data
-app.use(express.json()); // Parse JSON data
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+// Serve static files, but with lower priority than EJS views
+app.use(express.static('public', { index: false })); // Disable auto-loading index.html
+
 app.use(
     session({
         secret: process.env.SESSION_SECRET || 'dauren',
         resave: false,
         saveUninitialized: true,
-        cookie: { secure: process.env.NODE_ENV === 'production' }, // Use secure cookies in production
+        cookie: { secure: process.env.NODE_ENV === 'production' },
     })
 );
-
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
 
 // Connect to MongoDB
 mongoose
@@ -48,8 +51,16 @@ const CAR_API_KEY = process.env.CAR_API_KEY;
 
 // ------------------- Routes -------------------
 
-
+// Redirect root to login page
 app.get('/', (req, res) => {
+    if (req.session.user) {
+        return res.redirect('/dashboard'); // Redirect logged-in users
+    }
+    res.redirect('/login');
+});
+
+// Login routes
+app.get('/login', (req, res) => {
     res.render('login');
 });
 
@@ -66,20 +77,24 @@ app.post('/login', async (req, res) => {
             return res.status(401).send('Invalid login credentials');
         }
 
-        // Compare plain text passwords
         if (user.password !== password) {
             console.log('Password mismatch');
             return res.status(401).send('Invalid login credentials');
         }
 
-        // Login successful
         console.log('Login successful');
         req.session.user = { id: user._id, username: user.username, isAdmin: user.isAdmin };
-        res.redirect(user.isAdmin ? '/admin' : '/');
+
+        res.redirect(user.isAdmin ? '/admin' : '/dashboard');
     } catch (error) {
         console.error('Error during login:', error);
         res.status(500).send('Server error');
     }
+});
+
+// Dashboard for logged-in users
+app.get('/dashboard', isAuthenticated, (req, res) => {
+    res.render('dashboard', { user: req.session.user });
 });
 
 // Weather API route
@@ -102,7 +117,6 @@ app.get('/weather', async (req, res) => {
             return res.status(404).json({ error: 'City not found' });
         }
 
-        // Save the request and response in MongoDB
         await History.create({
             userRequest: { api: 'Weather API', input: { city } },
             response: data,
@@ -130,80 +144,10 @@ app.get('/weather', async (req, res) => {
     }
 });
 
-
-// Car API route
-app.get('/cars', async (req, res) => {
-    const model = req.query.model || 'camry';
-    try {
-        const url = `https://api.api-ninjas.com/v1/cars?model=${model}`;
-        const response = await fetch(url, {
-            headers: { 'X-Api-Key': CAR_API_KEY },
-        });
-
-        const data = await response.json();
-
-        // Log the request and response in MongoDB
-        await History.create({
-            userRequest: { api: 'Car API', input: { model } },
-            response: response.ok ? data : { error: 'Failed to fetch car data' },
-        });
-
-        if (!response.ok) {
-            return res.status(response.status).json({ error: 'Failed to fetch car data' });
-        }
-
-        res.json(data);
-    } catch (error) {
-        console.error('Error fetching car data:', error);
-        res.status(500).json({ error: 'Failed to fetch car data' });
-    }
-});
-
-
-// VIN decoding route
-app.get('/vin', async (req, res) => {
-    const vin = req.query.vin;
-    if (!vin) {
-        return res.status(400).json({ error: 'VIN is required' });
-    }
-
-    if (vin.length !== 17) {
-        return res.status(400).json({ error: 'VIN must be exactly 17 characters long.' });
-    }
-
-    const url = `https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/${vin}?format=json`;
-
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if (!response.ok || data.Results.length === 0) {
-            throw new Error('Invalid response from NHTSA API');
-        }
-
-        const filteredData = {
-            Make: data.Results.find((item) => item.Variable === 'Make')?.Value,
-            Model: data.Results.find((item) => item.Variable === 'Model')?.Value,
-            Year: data.Results.find((item) => item.Variable === 'Model Year')?.Value,
-            Engine: data.Results.find((item) => item.Variable === 'Engine Number of Cylinders')?.Value,
-            Trim: data.Results.find((item) => item.Variable === 'Trim')?.Value,
-            VehicleType: data.Results.find((item) => item.Variable === 'Vehicle Type')?.Value,
-            Transmission: data.Results.find((item) => item.Variable === 'Transmission Style')?.Value,
-            FuelType: data.Results.find((item) => item.Variable === 'Fuel Type - Primary')?.Value,
-        };
-
-        res.json(filteredData);
-    } catch (error) {
-        console.error('Error decoding VIN:', error.message);
-        res.status(500).json({ error: 'Failed to decode VIN. Please try again later.' });
-    }
-});
-
-
 // Admin panel route
 app.get('/admin', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const users = await User.find({}, { password: 0 }); // Don't send passwords to the client
+        const users = await User.find({}, { password: 0 });
         res.render('admin', { users });
     } catch (error) {
         console.error('Error fetching users:', error);
@@ -211,36 +155,22 @@ app.get('/admin', isAuthenticated, isAdmin, async (req, res) => {
     }
 });
 
-app.post('/admin/add', async (req, res) => {
-    const { username, password, isAdmin } = req.body;
-
+// History route
+app.get('/history', isAuthenticated, async (req, res) => {
     try {
-        // Create a new user
-        const newUser = new User({
-            username,
-            password,
-            isAdmin: isAdmin === 'on', // Convert checkbox value to Boolean
-        });
-
-        // Save the user to the database
-        await newUser.save();
-        console.log('User added:', newUser);
-
-        // Redirect back to the admin panel
-        res.redirect('/admin');
-    } catch (error) {
-        console.error('Error adding user:', error);
-        res.status(500).send('Failed to add user');
-    }
-});
-app.get('/history', async (req, res) => {
-    try {
-        const history = await History.find().sort({ createdAt: -1 }); // Most recent first
+        const history = await History.find().sort({ createdAt: -1 });
         res.render('history', { history });
     } catch (error) {
         console.error('Error fetching history:', error);
         res.status(500).send('Failed to fetch history');
     }
+});
+
+// Logout route
+app.get('/logout', (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/login');
+    });
 });
 
 // ------------------- Middleware -------------------
