@@ -85,7 +85,7 @@ app.post('/login', async (req, res) => {
         console.log('Login successful');
         req.session.user = { id: user._id, username: user.username, isAdmin: user.isAdmin };
 
-        res.redirect(user.isAdmin ? '/admin' : '/dashboard');
+        res.redirect(user.isAdmin ? '/admin' : '/weather');
     } catch (error) {
         console.error('Error during login:', error);
         res.status(500).send('Server error');
